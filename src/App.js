@@ -13,7 +13,7 @@ import RegistroProducto from "./pages/RegistroProductos";
 import Login from "./pages/Login";
 import PanelDomiciliario from "./pages/PanelDomiciliario";
 import RegistroPedidos from "./pages/RegistroPedidos";
-
+import Reportes from "./pages/Reportes";
 
 // Página provisional para las secciones que aún no tienen componente.
 const PaginaProvisional = ({ titulo }) => {
@@ -51,11 +51,9 @@ function App() {
           element={<RegistroPedidos />}
         />
 
-        
-
         <Route
           path="/reportes"
-          element={<PaginaProvisional titulo="Reportes" />}
+          element={<Reportes/>}
         />
 
         <Route
