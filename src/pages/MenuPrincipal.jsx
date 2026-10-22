@@ -11,12 +11,7 @@ import {
   Chip,
   CssBaseline,
   Divider,
-  Drawer,
   IconButton,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
   Toolbar,
   Typography,
   Button,
@@ -28,13 +23,8 @@ import {
 
 import {
   Menu as MenuIcon,
-  DashboardRounded as DashboardIcon,
   ShoppingBagOutlined as ShoppingBagIcon,
   Inventory2Outlined as InventoryIcon,
-  CategoryOutlined as CategoryIcon,
-  TwoWheelerOutlined as DeliveryIcon,
-  AssessmentOutlined as AssessmentIcon,
-  SettingsOutlined as SettingsIcon,
   NotificationsNoneOutlined as NotificationsIcon,
   AddRounded as AddIcon,
   TrendingUpRounded as TrendingUpIcon,
@@ -42,50 +32,19 @@ import {
   PendingActionsRounded as PendingIcon,
   PersonOutlineRounded as PersonIcon,
   ArrowForwardRounded as ArrowForwardIcon,
-  StorefrontOutlined as StoreIcon,
-  LocalShippingOutlined as ShippingIcon,
 } from "@mui/icons-material";
 
-const DRAWER_WIDTH = 250;
-const DRAWER_CLOSED_WIDTH = 76;
+import DrawerBar from "../components/DrawerBar";
 
-const opcionesMenu = [
-  {
-    texto: "Panel principal",
-    ruta: "/",
-    icono: <DashboardIcon />,
-  },
-  {
-    texto: "Pedidos",
-    ruta: "/pedidos",
-    icono: <ShoppingBagIcon />,
-  },
-  {
-    texto: "Productos",
-    ruta: "/productos",
-    icono: <InventoryIcon />,
-  },
-  {
-    texto: "Categorías",
-    ruta: "/categorias",
-    icono: <CategoryIcon />,
-  },
-  {
-    texto: "Domiciliarios",
-    ruta: "/domiciliarios",
-    icono: <DeliveryIcon />,
-  },
-  {
-    texto: "Reportes",
-    ruta: "/reportes",
-    icono: <AssessmentIcon />,
-  },
-  {
-    texto: "Configuración",
-    ruta: "/configuracion",
-    icono: <SettingsIcon />,
-  },
-];
+const RUTAS = {
+  inicio: "/menuPrincial",
+  pedidos: "/pedidos",
+  productos: "/productos",
+  categorias: "/categorias",
+  domiciliarios: "/domiciliarios",
+  reportes: "/reportes",
+  configuracion: "/configuracion",
+};
 
 const resumen = [
   {
@@ -95,7 +54,7 @@ const resumen = [
     icono: <ShoppingBagIcon />,
     color: "#2563eb",
     fondo: "#eff6ff",
-    ruta: "/pedidos",
+    ruta: RUTAS.pedidos,
   },
   {
     titulo: "Pedidos pendientes",
@@ -104,16 +63,16 @@ const resumen = [
     icono: <PendingIcon />,
     color: "#d97706",
     fondo: "#fffbeb",
-    ruta: "/pedidos",
+    ruta: RUTAS.pedidos,
   },
   {
-    titulo: "Productos",
+    titulo: "Productos s",
     valor: "0",
     descripcion: "En el catálogo",
     icono: <InventoryIcon />,
     color: "#059669",
     fondo: "#ecfdf5",
-    ruta: "/productos",
+    ruta: RUTAS.productos,
   },
   {
     titulo: "Ventas de hoy",
@@ -122,7 +81,7 @@ const resumen = [
     icono: <MoneyIcon />,
     color: "#7c3aed",
     fondo: "#f5f3ff",
-    ruta: "/reportes",
+    ruta: RUTAS.reportes,
   },
 ];
 
@@ -132,13 +91,23 @@ export default function MenuPrincipal() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const opcionActual =
-    opcionesMenu.find((opcion) => opcion.ruta === location.pathname) ||
-    opcionesMenu[0];
-
   const seleccionarOpcion = (ruta) => {
     navigate(ruta);
   };
+
+  const opcionActual =
+    location.pathname === "/"
+      ? { texto: "Panel principal" }
+      : [
+          { texto: "Panel principal", ruta: RUTAS.inicio },
+          { texto: "Pedidos", ruta: RUTAS.pedidos },
+          { texto: "Productos", ruta: RUTAS.productos },
+          { texto: "Categorías", ruta: RUTAS.categorias },
+          { texto: "Domiciliarios", ruta: RUTAS.domiciliarios },
+          { texto: "Reportes", ruta: RUTAS.reportes },
+          { texto: "Configuración", ruta: RUTAS.configuracion },
+        ].find((opcion) => opcion.ruta === location.pathname) ||
+        { texto: "Panel principal" };
 
   return (
     <Box
@@ -151,7 +120,7 @@ export default function MenuPrincipal() {
     >
       <CssBaseline />
 
-      {/* BARRA SUPERIOR */}
+      {/* APP BAR SUPERIOR */}
       <AppBar
         position="fixed"
         elevation={0}
@@ -170,26 +139,33 @@ export default function MenuPrincipal() {
             gap: 1.5,
           }}
         >
+          {/* Botón del DrawerBar */}
           <IconButton
-            onClick={() => setMenuAbierto((anterior) => !anterior)}
-            aria-label="Abrir o cerrar menú"
+            onClick={() =>
+              setMenuAbierto((anterior) => !anterior)
+            }
+            aria-label="Abrir o contraer menú"
             sx={{
               color: "#475569",
               borderRadius: 2,
-              "&:hover": { bgcolor: "#f1f5f9" },
+              "&:hover": {
+                bgcolor: "#f1f5f9",
+              },
             }}
           >
             <MenuIcon />
           </IconButton>
 
+          {/* Logo */}
           <Box
-            onClick={() => navigate("/")}
+            onClick={() => seleccionarOpcion(RUTAS.inicio)}
             sx={{
               display: "flex",
               alignItems: "center",
               gap: 1.2,
               cursor: "pointer",
               flexGrow: 1,
+              minWidth: 0,
             }}
           >
             <Box
@@ -201,33 +177,44 @@ export default function MenuPrincipal() {
                 bgcolor: "#f97316",
                 color: "#fff",
                 borderRadius: 2.5,
-                boxShadow: "0 5px 12px rgba(249,115,22,0.22)",
+                fontSize: 19,
+                fontWeight: 900,
+                flexShrink: 0,
               }}
             >
-              <ShippingIcon />
+              D
             </Box>
 
-            <Box>
+            <Box sx={{ minWidth: 0 }}>
               <Typography
                 sx={{
                   fontSize: 19,
                   fontWeight: 900,
                   letterSpacing: "-0.6px",
                   lineHeight: 1.2,
+                  whiteSpace: "nowrap",
                 }}
               >
-                App <Box component="span" sx={{ color: "#f97316" }}>Domi</Box>
+                App{" "}
+                <Box component="span" sx={{ color: "#f97316" }}>
+                  Domi
+                </Box>
               </Typography>
 
               <Typography
                 variant="caption"
-                sx={{ color: "#94a3b8", fontSize: 10 }}
+                sx={{
+                  color: "#94a3b8",
+                  fontSize: 10,
+                  display: { xs: "none", sm: "block" },
+                }}
               >
                 PANEL DE ADMINISTRACIÓN
               </Typography>
             </Box>
           </Box>
 
+          {/* Notificaciones */}
           <Tooltip title="Notificaciones">
             <IconButton
               aria-label="Notificaciones"
@@ -244,14 +231,15 @@ export default function MenuPrincipal() {
           <Divider
             orientation="vertical"
             flexItem
-            sx={{ mx: 1, my: 2, borderColor: "#e9edf3" }}
+            sx={{
+              mx: { xs: 0, sm: 1 },
+              my: 2,
+              borderColor: "#e9edf3",
+            }}
           />
 
-          <Stack
-            direction="row"
-            spacing={1.2}
-            alignItems="center"
-          >
+          {/* Perfil */}
+          <Stack direction="row" spacing={1.2} alignItems="center">
             <Avatar
               sx={{
                 width: 39,
@@ -267,14 +255,16 @@ export default function MenuPrincipal() {
 
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
               <Typography
-                sx={{ fontSize: 13, fontWeight: 800, color: "#1e293b" }}
+                sx={{
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: "#1e293b",
+                }}
               >
                 Administrador
               </Typography>
 
-              <Typography
-                sx={{ fontSize: 11, color: "#94a3b8" }}
-              >
+              <Typography sx={{ fontSize: 11, color: "#94a3b8" }}>
                 Panel de gestión
               </Typography>
             </Box>
@@ -282,196 +272,11 @@ export default function MenuPrincipal() {
         </Toolbar>
       </AppBar>
 
-      {/* MENÚ LATERAL */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: menuAbierto ? DRAWER_WIDTH : DRAWER_CLOSED_WIDTH,
-          flexShrink: 0,
-          whiteSpace: "nowrap",
-          "& .MuiDrawer-paper": {
-            width: menuAbierto ? DRAWER_WIDTH : DRAWER_CLOSED_WIDTH,
-            boxSizing: "border-box",
-            overflowX: "hidden",
-            bgcolor: "#ffffff",
-            borderRight: "1px solid #e9edf3",
-            transition: "width 0.22s ease",
-          },
-        }}
-      >
-        <Toolbar sx={{ minHeight: "72px !important" }} />
-
-        <Box sx={{ px: 1.5, py: 3 }}>
-          {menuAbierto && (
-            <Typography
-              sx={{
-                px: 1.5,
-                mb: 1.5,
-                fontSize: 10,
-                fontWeight: 900,
-                color: "#94a3b8",
-                letterSpacing: 1.2,
-              }}
-            >
-              ESPACIO DE TRABAJO
-            </Typography>
-          )}
-
-          <List disablePadding>
-            {opcionesMenu.map((opcion) => {
-              const activo = location.pathname === opcion.ruta;
-
-              return (
-                <Tooltip
-                  key={opcion.ruta}
-                  title={menuAbierto ? "" : opcion.texto}
-                  placement="right"
-                >
-                  <ListItemButton
-                    selected={activo}
-                    onClick={() => seleccionarOpcion(opcion.ruta)}
-                    sx={{
-                      minHeight: 48,
-                      mb: 0.7,
-                      px: menuAbierto ? 1.7 : 0,
-                      justifyContent: menuAbierto ? "flex-start" : "center",
-                      borderRadius: 2.5,
-                      color: activo ? "#ea580c" : "#64748b",
-                      bgcolor: activo ? "#fff7ed" : "transparent",
-                      position: "relative",
-                      "&.Mui-selected": {
-                        bgcolor: "#fff7ed",
-                      },
-                      "&.Mui-selected:hover": {
-                        bgcolor: "#ffedd5",
-                      },
-                      "&:hover": {
-                        bgcolor: activo ? "#ffedd5" : "#f8fafc",
-                      },
-                      "&::before": activo
-                        ? {
-                            content: '""',
-                            position: "absolute",
-                            left: 0,
-                            top: "22%",
-                            height: "56%",
-                            width: 3,
-                            borderRadius: "0 4px 4px 0",
-                            bgcolor: "#f97316",
-                          }
-                        : {},
-                    }}
-                  >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: menuAbierto ? 38 : "auto",
-                        justifyContent: "center",
-                        color: "inherit",
-                      }}
-                    >
-                      {opcion.icono}
-                    </ListItemIcon>
-
-                    {menuAbierto && (
-                      <ListItemText
-                        primary={opcion.texto}
-                        primaryTypographyProps={{
-                          fontSize: 13,
-                          fontWeight: activo ? 800 : 600,
-                        }}
-                      />
-                    )}
-
-                    {menuAbierto && activo && (
-                      <Box
-                        sx={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: "50%",
-                          bgcolor: "#f97316",
-                        }}
-                      />
-                    )}
-                  </ListItemButton>
-                </Tooltip>
-              );
-            })}
-          </List>
-        </Box>
-
-        <Box sx={{ flexGrow: 1 }} />
-
-        {/* TARJETA INFORMATIVA */}
-        {menuAbierto && (
-          <Box sx={{ px: 2, pb: 2 }}>
-            <Box
-              sx={{
-                p: 2,
-                bgcolor: "#fff7ed",
-                border: "1px solid #ffedd5",
-                borderRadius: 3,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: 2,
-                  display: "grid",
-                  placeItems: "center",
-                  bgcolor: "#ffedd5",
-                  color: "#ea580c",
-                  mb: 1.5,
-                }}
-              >
-                <StoreIcon fontSize="small" />
-              </Box>
-
-              <Typography
-                sx={{ fontSize: 12, fontWeight: 800, color: "#9a3412" }}
-              >
-                Tu negocio, organizado
-              </Typography>
-
-              <Typography
-                sx={{
-                  mt: 0.5,
-                  fontSize: 11,
-                  lineHeight: 1.6,
-                  color: "#c2410c",
-                }}
-              >
-                Administra tus productos y coordina los domicilios desde un solo lugar.
-              </Typography>
-            </Box>
-          </Box>
-        )}
-
-        <Divider sx={{ borderColor: "#e9edf3" }} />
-
-        <Box
-          sx={{
-            px: menuAbierto ? 2.5 : 0,
-            py: 2,
-            textAlign: menuAbierto ? "left" : "center",
-          }}
-        >
-          {menuAbierto ? (
-            <>
-              <Typography sx={{ fontSize: 10, color: "#94a3b8" }}>
-                APP DOMI
-              </Typography>
-              <Typography sx={{ fontSize: 10, color: "#cbd5e1", mt: 0.3 }}>
-                Gestión de domicilios
-              </Typography>
-            </>
-          ) : (
-            <Typography sx={{ fontSize: 11, fontWeight: 900, color: "#f97316" }}>
-              AD
-            </Typography>
-          )}
-        </Box>
-      </Drawer>
+      {/* DRAWER BAR INDEPENDIENTE */}
+      <DrawerBar
+        open={menuAbierto}
+        onClose={() => setMenuAbierto(false)}
+      />
 
       {/* CONTENIDO PRINCIPAL */}
       <Box
@@ -494,25 +299,19 @@ export default function MenuPrincipal() {
           sx={{ mb: 4 }}
         >
           <Box>
-            <Stack
-              direction="row"
-              spacing={1}
-              alignItems="center"
-              sx={{ mb: 1 }}
-            >
-              <Chip
-                label="PANEL GENERAL"
-                size="small"
-                sx={{
-                  bgcolor: "#fff7ed",
-                  color: "#ea580c",
-                  fontSize: 10,
-                  fontWeight: 900,
-                  letterSpacing: 0.5,
-                  borderRadius: 1.5,
-                }}
-              />
-            </Stack>
+            <Chip
+              label="PANEL GENERAL"
+              size="small"
+              sx={{
+                mb: 1,
+                bgcolor: "#fff7ed",
+                color: "#ea580c",
+                fontSize: 10,
+                fontWeight: 900,
+                letterSpacing: 0.5,
+                borderRadius: 1.5,
+              }}
+            />
 
             <Typography
               sx={{
@@ -527,7 +326,11 @@ export default function MenuPrincipal() {
             </Typography>
 
             <Typography
-              sx={{ mt: 1, fontSize: 13, color: "#94a3b8" }}
+              sx={{
+                mt: 1,
+                fontSize: 13,
+                color: "#94a3b8",
+              }}
             >
               Administra tus pedidos, productos y entregas desde un solo lugar.
             </Typography>
@@ -536,7 +339,7 @@ export default function MenuPrincipal() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => seleccionarOpcion("/productos")}
+            onClick={() => seleccionarOpcion(RUTAS.productos)}
             sx={{
               alignSelf: { xs: "stretch", sm: "center" },
               bgcolor: "#f97316",
@@ -579,11 +382,14 @@ export default function MenuPrincipal() {
                   },
                 }}
               >
-                <CardContent sx={{ p: 2.7, "&:last-child": { pb: 2.7 } }}>
+                <CardContent
+                  sx={{ p: 2.7, "&:last-child": { pb: 2.7 } }}
+                >
                   <Stack
                     direction="row"
                     justifyContent="space-between"
                     alignItems="center"
+                    spacing={1}
                   >
                     <Typography
                       sx={{
@@ -604,6 +410,7 @@ export default function MenuPrincipal() {
                         borderRadius: 2.5,
                         bgcolor: item.fondo,
                         color: item.color,
+                        flexShrink: 0,
                       }}
                     >
                       {item.icono}
@@ -642,7 +449,7 @@ export default function MenuPrincipal() {
           ))}
         </Grid>
 
-        {/* SECCIÓN INFERIOR */}
+        {/* ACTIVIDAD RECIENTE Y ACCESOS RÁPIDOS */}
         <Grid container spacing={2.5} sx={{ mt: 0.8 }}>
           <Grid size={{ xs: 12, lg: 7.5 }}>
             <Paper
@@ -664,13 +471,21 @@ export default function MenuPrincipal() {
               >
                 <Box>
                   <Typography
-                    sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}
+                    sx={{
+                      fontSize: 16,
+                      fontWeight: 900,
+                      color: "#0f172a",
+                    }}
                   >
                     Actividad reciente
                   </Typography>
 
                   <Typography
-                    sx={{ fontSize: 12, color: "#94a3b8", mt: 0.6 }}
+                    sx={{
+                      fontSize: 12,
+                      color: "#94a3b8",
+                      mt: 0.6,
+                    }}
                   >
                     Resumen de la actividad de tu negocio
                   </Typography>
@@ -719,7 +534,11 @@ export default function MenuPrincipal() {
                 </Box>
 
                 <Typography
-                  sx={{ fontSize: 14, fontWeight: 800, color: "#334155" }}
+                  sx={{
+                    fontSize: 14,
+                    fontWeight: 800,
+                    color: "#334155",
+                  }}
                 >
                   Todo está listo para comenzar
                 </Typography>
@@ -733,12 +552,13 @@ export default function MenuPrincipal() {
                     lineHeight: 1.7,
                   }}
                 >
-                  Cuando registres pedidos, aquí podrás consultar la actividad más reciente.
+                  Cuando registres pedidos, aquí podrás consultar la actividad
+                  más reciente.
                 </Typography>
 
                 <Button
                   endIcon={<ArrowForwardIcon />}
-                  onClick={() => seleccionarOpcion("/pedidos")}
+                  onClick={() => seleccionarOpcion(RUTAS.pedidos)}
                   sx={{
                     mt: 2,
                     textTransform: "none",
@@ -747,7 +567,7 @@ export default function MenuPrincipal() {
                     color: "#ea580c",
                   }}
                 >
-                  Ir a pedidos
+                  Registrar pedido
                 </Button>
               </Box>
             </Paper>
@@ -766,13 +586,22 @@ export default function MenuPrincipal() {
               }}
             >
               <Typography
-                sx={{ fontSize: 16, fontWeight: 900, color: "#0f172a" }}
+                sx={{
+                  fontSize: 16,
+                  fontWeight: 900,
+                  color: "#0f172a",
+                }}
               >
                 Accesos rápidos
               </Typography>
 
               <Typography
-                sx={{ fontSize: 12, color: "#94a3b8", mt: 0.6, mb: 2.5 }}
+                sx={{
+                  fontSize: 12,
+                  color: "#94a3b8",
+                  mt: 0.6,
+                  mb: 2.5,
+                }}
               >
                 Accede a las tareas más frecuentes
               </Typography>
@@ -783,15 +612,15 @@ export default function MenuPrincipal() {
                     texto: "Registrar producto",
                     descripcion: "Añade productos al catálogo",
                     icono: <InventoryIcon />,
-                    ruta: "/productos",
+                    ruta: RUTAS.productos,
                     color: "#059669",
                     fondo: "#ecfdf5",
                   },
                   {
-                    texto: "Consultar pedidos",
-                    descripcion: "Revisa los pedidos registrados",
+                    texto: "Registrar pedido",
+                    descripcion: "Registra un nuevo domicilio",
                     icono: <ShoppingBagIcon />,
-                    ruta: "/pedidos",
+                    ruta: RUTAS.pedidos,
                     color: "#2563eb",
                     fondo: "#eff6ff",
                   },
@@ -799,13 +628,13 @@ export default function MenuPrincipal() {
                     texto: "Gestionar domiciliarios",
                     descripcion: "Administra el equipo de entregas",
                     icono: <PersonIcon />,
-                    ruta: "/domiciliarios",
+                    ruta: RUTAS.domiciliarios,
                     color: "#7c3aed",
                     fondo: "#f5f3ff",
                   },
                 ].map((acceso) => (
                   <Box
-                    key={acceso.ruta}
+                    key={acceso.texto}
                     onClick={() => seleccionarOpcion(acceso.ruta)}
                     sx={{
                       display: "flex",

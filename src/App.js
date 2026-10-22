@@ -45,7 +45,6 @@ function App() {
           path="/productos"
           element={<RegistroProducto />}
         />
-
         
         <Route
           path="/pedidos"
