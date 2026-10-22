@@ -11,6 +11,10 @@ import MenuPrincipal from "./pages/MenuPrincipal";
 import RegistroProducto from "./pages/RegistroProductos";
 
 import Login from "./pages/Login";
+import PanelDomiciliario from "./pages/PanelDomiciliario";
+
+
+
 // Página provisional para las secciones que aún no tienen componente.
 const PaginaProvisional = ({ titulo }) => {
   return (
@@ -46,7 +50,7 @@ function App() {
 
         <Route
           path="/domiciliarios"
-          element={<PaginaProvisional titulo="Domiciliarios" />}
+          element={<PanelDomiciliario />}
         />
 
         <Route
