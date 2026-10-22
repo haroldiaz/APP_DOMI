@@ -12,7 +12,7 @@ import RegistroProducto from "./pages/RegistroProductos";
 
 import Login from "./pages/Login";
 import PanelDomiciliario from "./pages/PanelDomiciliario";
-
+import RegistroPedidos from "./pages/RegistroPedidos";
 
 
 // Página provisional para las secciones que aún no tienen componente.
@@ -37,6 +37,10 @@ function App() {
           path="/menuPrincial"
           element={<MenuPrincipal />}
         />
+        <Route
+          path="/domiciliarios"
+          element={<PanelDomiciliario />}
+        />
        |<Route
           path="/productos"
           element={<RegistroProducto />}
@@ -44,14 +48,11 @@ function App() {
 
         
         <Route
-          path="/categorias"
-          element={<PaginaProvisional titulo="Categorías" />}
+          path="/pedidos"
+          element={<RegistroPedidos />}
         />
 
-        <Route
-          path="/domiciliarios"
-          element={<PanelDomiciliario />}
-        />
+        
 
         <Route
           path="/reportes"
