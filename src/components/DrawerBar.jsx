@@ -22,26 +22,27 @@ import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import CategoryOutlinedIcon from "@mui/icons-material/CategoryOutlined";
 import TwoWheelerOutlinedIcon from "@mui/icons-material/TwoWheelerOutlined";
-import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
+import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 
-const DRAWER_WIDTH = 250;
+const DRAWER_WIDTH = 248;
 const DRAWER_CLOSED_WIDTH = 76;
+const APPBAR_HEIGHT = 72;
 
 const COLORES = {
-  blanco: "#ffffff",
+  fondo: "#ffffff",
   texto: "#202939",
-  secundario: "#64748b",
-  borde: "#e9edf3",
-  naranja: "#f97316",
-  naranjaClaro: "#fff7ed",
+  secundario: "#7b8494",
+  borde: "#edf0f4",
+  naranja: "#ed6b23",
+  naranjaClaro: "#fff4ec",
+  hover: "#f8f9fb",
 };
 
-const opcionesMenu = [
+const OPCIONES_MENU = [
   {
     texto: "Panel principal",
-    ruta: "/menuPrincipal",
+    ruta: "/menu",
     icono: <DashboardOutlinedIcon />,
   },
   {
@@ -67,7 +68,7 @@ const opcionesMenu = [
   {
     texto: "Reportes",
     ruta: "/reportes",
-    icono: <AssessmentOutlinedIcon />,
+    icono: <BarChartOutlinedIcon />,
   },
   {
     texto: "Configuración",
@@ -85,6 +86,7 @@ export default function DrawerBar({
   const theme = useTheme();
 
   const esMovil = useMediaQuery(theme.breakpoints.down("md"));
+  const mostrarTexto = open || esMovil;
 
   const ancho = esMovil
     ? DRAWER_WIDTH
@@ -93,14 +95,13 @@ export default function DrawerBar({
       : DRAWER_CLOSED_WIDTH;
 
   const rutaActiva = (ruta) => {
-    if (ruta === "/menuPrincipal" && location.pathname === "/") {
+    const pathname = location.pathname;
+
+    if (ruta === "/menu" && pathname === "/") {
       return true;
     }
 
-    return (
-      location.pathname === ruta ||
-      location.pathname.startsWith(`${ruta}/`)
-    );
+    return pathname === ruta || pathname.startsWith(`${ruta}/`);
   };
 
   const seleccionarOpcion = (ruta) => {
@@ -120,46 +121,57 @@ export default function DrawerBar({
         keepMounted: true,
       }}
       sx={{
-        width: ancho,
+        width: esMovil ? 0 : ancho,
         flexShrink: 0,
         whiteSpace: "nowrap",
         "& .MuiDrawer-paper": {
           width: ancho,
           boxSizing: "border-box",
           overflowX: "hidden",
-          bgcolor: COLORES.blanco,
+          bgcolor: COLORES.fondo,
           color: COLORES.texto,
           borderRight: `1px solid ${COLORES.borde}`,
-          transition: "width 0.22s ease",
+          transition: theme.transitions.create("width", {
+            duration: theme.transitions.duration.shortest,
+          }),
         },
       }}
     >
-      <Toolbar sx={{ minHeight: "72px !important" }} />
+      {/* Espacio debajo del AppBar */}
+      <Toolbar
+        sx={{
+          minHeight: `${APPBAR_HEIGHT}px !important`,
+        }}
+      />
 
-      <Box sx={{ px: 1.5, py: 3 }}>
-        {open && (
+      {/* Navegación principal */}
+      <Box sx={{ px: 1.5, pt: 3, pb: 2 }}>
+        {mostrarTexto && (
           <Typography
             sx={{
               px: 1.5,
               mb: 1.5,
+              color: "#a0a7b3",
               fontSize: 10,
               fontWeight: 800,
-              color: "#94a3b8",
-              letterSpacing: 1,
+              letterSpacing: 1.3,
             }}
           >
-            ESPACIO DE TRABAJO
+            MENÚ PRINCIPAL
           </Typography>
         )}
 
-        <List disablePadding>
-          {opcionesMenu.map((opcion) => {
+        <List
+          disablePadding
+          aria-label="Navegación principal"
+        >
+          {OPCIONES_MENU.map((opcion) => {
             const activa = rutaActiva(opcion.ruta);
 
             return (
               <Tooltip
                 key={opcion.ruta}
-                title={!esMovil && !open ? opcion.texto : ""}
+                title={!mostrarTexto ? opcion.texto : ""}
                 placement="right"
                 arrow
               >
@@ -167,70 +179,78 @@ export default function DrawerBar({
                   selected={activa}
                   onClick={() => seleccionarOpcion(opcion.ruta)}
                   aria-current={activa ? "page" : undefined}
+                  aria-label={opcion.texto}
                   sx={{
-                    minHeight: 48,
-                    mb: 0.7,
-                    px: open || esMovil ? 1.7 : 0,
-                    justifyContent:
-                      open || esMovil ? "flex-start" : "center",
-                    borderRadius: 2.5,
                     position: "relative",
+                    minHeight: 45,
+                    mb: 0.65,
+                    px: mostrarTexto ? 1.6 : 0,
+                    justifyContent: mostrarTexto
+                      ? "flex-start"
+                      : "center",
+                    borderRadius: 2,
                     color: activa
-                      ? "#ea580c"
+                      ? COLORES.naranja
                       : COLORES.secundario,
+                    transition: "background-color 0.18s ease",
                     "&.Mui-selected": {
                       bgcolor: COLORES.naranjaClaro,
                     },
                     "&.Mui-selected:hover": {
-                      bgcolor: "#ffedd5",
+                      bgcolor: "#ffeadb",
                     },
                     "&:hover": {
                       bgcolor: activa
-                        ? "#ffedd5"
-                        : "#f8fafc",
+                        ? COLORES.naranjaClaro
+                        : COLORES.hover,
                     },
                     "&::before": activa
                       ? {
                           content: '""',
                           position: "absolute",
                           left: 0,
-                          top: "22%",
-                          height: "56%",
+                          top: "25%",
+                          height: "50%",
                           width: 3,
-                          borderRadius: "0 4px 4px 0",
                           bgcolor: COLORES.naranja,
+                          borderRadius: "0 3px 3px 0",
                         }
                       : {},
                   }}
                 >
                   <ListItemIcon
                     sx={{
-                      minWidth: open || esMovil ? 38 : "auto",
+                      minWidth: mostrarTexto ? 37 : "auto",
                       justifyContent: "center",
                       color: "inherit",
+                      "& .MuiSvgIcon-root": {
+                        fontSize: 21,
+                      },
                     }}
                   >
                     {opcion.icono}
                   </ListItemIcon>
 
-                  {(open || esMovil) && (
+                  {mostrarTexto && (
                     <ListItemText
                       primary={opcion.texto}
                       primaryTypographyProps={{
-                        fontSize: 13,
+                        fontSize: 12.5,
                         fontWeight: activa ? 700 : 500,
+                        letterSpacing: 0.05,
                       }}
                     />
                   )}
 
-                  {(open || esMovil) && activa && (
+                  {mostrarTexto && activa && (
                     <Box
                       sx={{
-                        width: 6,
-                        height: 6,
+                        width: 5,
+                        height: 5,
                         flexShrink: 0,
                         borderRadius: "50%",
                         bgcolor: COLORES.naranja,
+                        ml: 1,
                       }}
                     />
                   )}
@@ -243,36 +263,23 @@ export default function DrawerBar({
 
       <Box sx={{ flexGrow: 1 }} />
 
-      {(open || esMovil) && (
-        <Box sx={{ px: 2, pb: 2 }}>
+      {/* Pie del menú */}
+      <Box sx={{ px: mostrarTexto ? 2 : 1.25, pb: 2 }}>
+        {mostrarTexto ? (
           <Box
             sx={{
-              p: 2,
-              bgcolor: COLORES.naranjaClaro,
-              border: "1px solid #ffedd5",
-              borderRadius: 3,
+              px: 1.5,
+              py: 1.75,
+              borderRadius: 2,
+              bgcolor: "#fafbfc",
+              border: `1px solid ${COLORES.borde}`,
             }}
           >
-            <Box
-              sx={{
-                width: 34,
-                height: 34,
-                mb: 1.5,
-                display: "grid",
-                placeItems: "center",
-                borderRadius: 2,
-                bgcolor: "#ffedd5",
-                color: "#ea580c",
-              }}
-            >
-              <StorefrontOutlinedIcon fontSize="small" />
-            </Box>
-
             <Typography
               sx={{
-                fontSize: 12,
-                fontWeight: 800,
-                color: "#9a3412",
+                fontSize: 11,
+                color: COLORES.texto,
+                fontWeight: 700,
               }}
             >
               APP DOMI
@@ -280,35 +287,52 @@ export default function DrawerBar({
 
             <Typography
               sx={{
-                mt: 0.5,
-                fontSize: 11,
+                mt: 0.4,
+                fontSize: 10,
                 lineHeight: 1.6,
-                color: "#c2410c",
+                color: COLORES.secundario,
               }}
             >
-              Gestión de pedidos y domicilios.
+              Gestión de pedidos y domicilios
             </Typography>
           </Box>
-        </Box>
-      )}
+        ) : (
+          <Tooltip title="APP DOMI" placement="right" arrow>
+            <Box
+              sx={{
+                height: 40,
+                display: "grid",
+                placeItems: "center",
+                border: `1px solid ${COLORES.borde}`,
+                borderRadius: 2,
+                fontSize: 11,
+                fontWeight: 800,
+                color: COLORES.naranja,
+              }}
+            >
+              AD
+            </Box>
+          </Tooltip>
+        )}
+      </Box>
 
       <Divider sx={{ borderColor: COLORES.borde }} />
 
       <Box
         sx={{
-          px: open || esMovil ? 2.5 : 0,
-          py: 2,
-          textAlign: open || esMovil ? "left" : "center",
+          px: mostrarTexto ? 2 : 0,
+          py: 1.75,
+          textAlign: mostrarTexto ? "left" : "center",
         }}
       >
         <Typography
           sx={{
-            fontSize: 10,
-            fontWeight: 700,
-            color: "#94a3b8",
+            fontSize: 9.5,
+            fontWeight: 500,
+            color: "#a0a7b3",
           }}
         >
-          {open || esMovil ? "Panel administrativo" : "AD"}
+          {mostrarTexto ? "Panel administrativo" : "v1"}
         </Typography>
       </Box>
     </Drawer>

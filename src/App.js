@@ -34,7 +34,7 @@ function App() {
         {/* Menú principal */}
         <Route path="/" element={<Login />} />
 |       <Route
-          path="/menuPrincial"
+          path="/menu"
           element={<MenuPrincipal />}
         />
         <Route
