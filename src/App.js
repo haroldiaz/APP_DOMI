@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 
 import MenuPrincipal from "./pages/MenuPrincipal";
-import RegistroProducto from "./pages/RegistroProductos";
+import RegistroProducto from "./pages/Productos/RegistroProductos";
 
 import Login from "./pages/Login";
 import PanelDomiciliario from "./pages/PanelDomiciliario";

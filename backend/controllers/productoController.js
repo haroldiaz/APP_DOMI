@@ -1,43 +1,80 @@
-import * as productoService from "../services/productoService.js";
 
-export const obtenerProductos = async (req, res, next) => {
+import productoService from "../services/productoService.js";
+
+const manejarError = (res, error) => {
+  console.error("Error en productos:", error);
+
+  res.status(error.statusCode || 500).json({
+    mensaje:
+      error.statusCode
+        ? error.message
+        : "Ocurrió un error interno al procesar el producto",
+  });
+};
+
+// GET /api/productos
+export const obtenerProductos = async (req, res) => {
   try {
-    const productos = await productoService.listarProductos();
-
-    res.status(200).json({
-      total: productos.length,
-      productos,
-    });
+    const productos = await productoService.obtenerProductos();
+    return res.json({ productos });
   } catch (error) {
-    next(error);
+    return manejarError(res, error);
   }
 };
 
-export const obtenerProductoPorId = async (req, res, next) => {
+// GET /api/productos/:id
+export const obtenerProductoPorId = async (req, res) => {
   try {
-    const producto = await productoService.buscarProducto(req.params.id);
+    const producto = await productoService.obtenerProductoPorId(
+      req.params.id
+    );
 
-    if (!producto) {
-      return res.status(404).json({
-        mensaje: "Producto no encontrado",
-      });
-    }
-
-    res.status(200).json({ producto });
+    return res.json({ producto });
   } catch (error) {
-    next(error);
+    return manejarError(res, error);
   }
 };
 
-export const crearProducto = async (req, res, next) => {
+// POST /api/productos
+export const crearProducto = async (req, res) => {
   try {
-    const producto = await productoService.registrarProducto(req.body);
+    const producto = await productoService.crearProducto(req.body);
 
-    res.status(201).json({
-      mensaje: "Producto creado correctamente",
+    return res.status(201).json({
+      mensaje: "Producto registrado correctamente",
       producto,
     });
   } catch (error) {
-    next(error);
+    return manejarError(res, error);
+  }
+};
+
+// PUT /api/productos/:id
+export const actualizarProducto = async (req, res) => {
+  try {
+    const producto = await productoService.actualizarProducto(
+      req.params.id,
+      req.body
+    );
+
+    return res.json({
+      mensaje: "Producto actualizado correctamente",
+      producto,
+    });
+  } catch (error) {
+    return manejarError(res, error);
+  }
+};
+
+// DELETE /api/productos/:id
+export const eliminarProducto = async (req, res) => {
+  try {
+    await productoService.eliminarProducto(req.params.id);
+
+    return res.json({
+      mensaje: "Producto desactivado correctamente",
+    });
+  } catch (error) {
+    return manejarError(res, error);
   }
 };
