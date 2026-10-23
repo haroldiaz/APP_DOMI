@@ -1,3 +1,4 @@
+
 import React, {
   useCallback,
   useEffect,
@@ -12,7 +13,6 @@ import {
   Avatar,
   Box,
   Button,
-  Chip,
   CircularProgress,
   CssBaseline,
   Dialog,
@@ -21,17 +21,10 @@ import {
   DialogTitle,
   Divider,
   IconButton,
-  InputAdornment,
   MenuItem,
   Paper,
   Snackbar,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Toolbar,
   Tooltip,
@@ -45,14 +38,12 @@ import NotificationsNoneOutlinedIcon from "@mui/icons-material/NotificationsNone
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
 import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
-import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 
 import DrawerBar from "../../components/DrawerBar";
+import TablaProductos from "../Productos/TablaProductos";
 import API_BASE from "../../config/api";
 
 // --------------------------------------------------
@@ -87,7 +78,6 @@ const campoSx = {
   "& .MuiOutlinedInput-root": {
     borderRadius: 2.5,
     bgcolor: COLORES.blanco,
-    transition: "all 0.2s ease",
     "& fieldset": {
       borderColor: COLORES.borde,
     },
@@ -111,11 +101,9 @@ const botonPrincipalSx = {
   fontWeight: 700,
   textTransform: "none",
   boxShadow: "0 4px 10px rgba(249, 115, 22, 0.16)",
-  transition: "all 0.2s ease",
   "&:hover": {
     bgcolor: COLORES.naranjaHover,
     boxShadow: "0 6px 14px rgba(249, 115, 22, 0.22)",
-    transform: "translateY(-1px)",
   },
   "&:disabled": {
     bgcolor: "#fed7aa",
@@ -131,22 +119,6 @@ const tarjetaSx = {
   borderRadius: 3,
   bgcolor: COLORES.blanco,
   boxShadow: "0 2px 8px rgba(15, 23, 42, 0.025)",
-};
-
-const cabeceraTablaSx = {
-  fontWeight: 800,
-  fontSize: 11,
-  color: "#667085",
-  textTransform: "uppercase",
-  letterSpacing: "0.7px",
-  whiteSpace: "nowrap",
-  py: 2,
-  borderBottom: `1px solid ${COLORES.borde}`,
-};
-
-const celdaTablaSx = {
-  py: 2,
-  borderBottom: `1px solid ${COLORES.borde}`,
 };
 
 // --------------------------------------------------
@@ -186,15 +158,20 @@ async function solicitarAPI(ruta, opciones = {}) {
 }
 
 // --------------------------------------------------
-// NORMALIZAR DATOS
+// NORMALIZAR PRODUCTOS
 // --------------------------------------------------
 
 function normalizarProducto(producto) {
   return {
     ...producto,
-    precio: Number(producto.precio),
-    stock: Number(producto.stock),
-    disponible: Boolean(producto.estado),
+    precio: Number(producto.precio || 0),
+    stock: Number(producto.stock || 0),
+    disponible:
+      producto.disponible !== undefined
+        ? Boolean(producto.disponible)
+        : producto.estado !== undefined
+          ? Boolean(producto.estado)
+          : true,
   };
 }
 
@@ -214,6 +191,8 @@ export default function RegistroProductos() {
   );
 
   const [productos, setProductos] = useState([]);
+
+  // La búsqueda se controla desde la tabla.
   const [busqueda, setBusqueda] = useState("");
 
   const [cargando, setCargando] = useState(true);
@@ -240,13 +219,16 @@ export default function RegistroProductos() {
   // NOTIFICACIONES
   // --------------------------------------------------
 
-  function mostrarMensaje(texto, tipo = "success") {
-    setMensaje({
-      abierto: true,
-      texto,
-      tipo,
-    });
-  }
+  const mostrarMensaje = useCallback(
+    (texto, tipo = "success") => {
+      setMensaje({
+        abierto: true,
+        texto,
+        tipo,
+      });
+    },
+    []
+  );
 
   function cerrarMensaje(_, razon) {
     if (razon === "clickaway") return;
@@ -258,7 +240,7 @@ export default function RegistroProductos() {
   }
 
   // --------------------------------------------------
-  // RESPONSIVE DEL MENÚ
+  // MENÚ RESPONSIVE
   // --------------------------------------------------
 
   useEffect(() => {
@@ -292,39 +274,24 @@ export default function RegistroProductos() {
     } finally {
       setCargando(false);
     }
-  }, []);
+  }, [mostrarMensaje]);
 
   useEffect(() => {
     cargarProductos();
   }, [cargarProductos]);
 
   // --------------------------------------------------
-  // BÚSQUEDA Y RESÚMENES
+  // RESUMEN DE PRODUCTOS
   // --------------------------------------------------
-
-  const productosFiltrados = useMemo(() => {
-    const termino = busqueda.trim().toLowerCase();
-
-    return productos.filter((producto) =>
-      [
-        producto.nombre,
-        producto.descripcion || "",
-        producto.id,
-      ].some((valor) =>
-        String(valor).toLowerCase().includes(termino)
-      )
-    );
-  }, [productos, busqueda]);
 
   const totalDisponibles = useMemo(
     () =>
-      productos.filter((producto) => producto.disponible)
-        .length,
+      productos.filter((producto) => producto.disponible).length,
     [productos]
   );
 
   // --------------------------------------------------
-  // FORMULARIOS
+  // ABRIR FORMULARIO PARA CREAR
   // --------------------------------------------------
 
   function abrirCrear() {
@@ -332,6 +299,10 @@ export default function RegistroProductos() {
     setFormulario({ ...formularioInicial });
     setDialogoAbierto(true);
   }
+
+  // --------------------------------------------------
+  // ABRIR FORMULARIO PARA EDITAR
+  // --------------------------------------------------
 
   function abrirEditar(producto) {
     setProductoSeleccionado(producto);
@@ -342,11 +313,36 @@ export default function RegistroProductos() {
       precio: String(producto.precio ?? ""),
       stock: String(producto.stock ?? 0),
       imagen_url: producto.imagen_url || "",
-      disponible: Boolean(producto.estado),
+      disponible: Boolean(producto.disponible),
     });
 
     setDialogoAbierto(true);
   }
+
+  // --------------------------------------------------
+  // DUPLICAR PRODUCTO
+  // --------------------------------------------------
+
+  function abrirDuplicar(producto) {
+    // Se limpia la selección para que el formulario
+    // realice un POST y no un PUT sobre el original.
+    setProductoSeleccionado(null);
+
+    setFormulario({
+      nombre: `${producto.nombre || ""} (copia)`,
+      descripcion: producto.descripcion || "",
+      precio: String(producto.precio ?? ""),
+      stock: "0",
+      imagen_url: producto.imagen_url || "",
+      disponible: true,
+    });
+
+    setDialogoAbierto(true);
+  }
+
+  // --------------------------------------------------
+  // CERRAR FORMULARIO
+  // --------------------------------------------------
 
   function cerrarFormulario() {
     if (guardando) return;
@@ -364,7 +360,7 @@ export default function RegistroProductos() {
   }
 
   // --------------------------------------------------
-  // REGISTRAR Y ACTUALIZAR PRODUCTOS
+  // GUARDAR PRODUCTO: CREAR O ACTUALIZAR
   // --------------------------------------------------
 
   async function guardarProducto(evento) {
@@ -440,6 +436,7 @@ export default function RegistroProductos() {
     setGuardando(true);
 
     try {
+      // ACTUALIZAR PRODUCTO EXISTENTE
       if (productoSeleccionado) {
         const respuesta = await solicitarAPI(
           `/productos/${productoSeleccionado.id}`,
@@ -472,6 +469,7 @@ export default function RegistroProductos() {
 
         mostrarMensaje("Producto actualizado correctamente.");
       } else {
+        // CREAR PRODUCTO NUEVO O DUPLICADO
         const respuesta = await solicitarAPI("/productos", {
           method: "POST",
           body: JSON.stringify(datosProducto),
@@ -492,7 +490,11 @@ export default function RegistroProductos() {
           ...anteriores,
         ]);
 
-        mostrarMensaje("Producto registrado correctamente.");
+        mostrarMensaje(
+          formulario.nombre.endsWith("(copia)")
+            ? "Producto duplicado correctamente."
+            : "Producto registrado correctamente."
+        );
       }
 
       setDialogoAbierto(false);
@@ -509,7 +511,7 @@ export default function RegistroProductos() {
   }
 
   // --------------------------------------------------
-  // DESACTIVAR PRODUCTOS
+  // DESACTIVAR PRODUCTO
   // --------------------------------------------------
 
   function abrirConfirmacionEliminar(producto) {
@@ -613,9 +615,7 @@ export default function RegistroProductos() {
             sx={{
               color: "#475569",
               borderRadius: 2.5,
-              "&:hover": {
-                bgcolor: "#f1f5f9",
-              },
+              "&:hover": { bgcolor: "#f1f5f9" },
             }}
           >
             <MenuIcon />
@@ -625,10 +625,10 @@ export default function RegistroProductos() {
             onClick={() => navigate("/menuPrincipal")}
             role="button"
             tabIndex={0}
-            onKeyDown={(event) => {
+            onKeyDown={(evento) => {
               if (
-                event.key === "Enter" ||
-                event.key === " "
+                evento.key === "Enter" ||
+                evento.key === " "
               ) {
                 navigate("/menuPrincipal");
               }
@@ -654,8 +654,7 @@ export default function RegistroProductos() {
                 fontSize: 21,
                 fontWeight: 900,
                 flexShrink: 0,
-                boxShadow:
-                  "0 4px 10px rgba(249, 115, 22, 0.2)",
+                boxShadow: "0 4px 10px rgba(249,115,22,0.2)",
               }}
             >
               D
@@ -685,10 +684,7 @@ export default function RegistroProductos() {
                   fontSize: 10,
                   fontWeight: 700,
                   letterSpacing: "1.1px",
-                  display: {
-                    xs: "none",
-                    sm: "block",
-                  },
+                  display: { xs: "none", sm: "block" },
                   mt: 0.3,
                 }}
               >
@@ -706,9 +702,7 @@ export default function RegistroProductos() {
                 border: `1px solid ${COLORES.borde}`,
                 borderRadius: 2.5,
                 color: "#64748b",
-                "&:hover": {
-                  bgcolor: "#f8fafc",
-                },
+                "&:hover": { bgcolor: "#f8fafc" },
               }}
             >
               <NotificationsNoneOutlinedIcon />
@@ -743,30 +737,12 @@ export default function RegistroProductos() {
               A
             </Avatar>
 
-            <Box
-              sx={{
-                display: {
-                  xs: "none",
-                  sm: "block",
-                },
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: 13,
-                  fontWeight: 800,
-                  lineHeight: 1.5,
-                }}
-              >
+            <Box sx={{ display: { xs: "none", sm: "block" } }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 800 }}>
                 Administrador
               </Typography>
 
-              <Typography
-                sx={{
-                  fontSize: 11,
-                  color: "#98a2b3",
-                }}
-              >
+              <Typography sx={{ fontSize: 11, color: "#98a2b3" }}>
                 Panel de gestión
               </Typography>
             </Box>
@@ -780,7 +756,7 @@ export default function RegistroProductos() {
         onClose={() => setMenuAbierto(false)}
       />
 
-      {/* CONTENIDO PRINCIPAL */}
+      {/* CONTENIDO */}
       <Box
         component="main"
         sx={{
@@ -788,73 +764,39 @@ export default function RegistroProductos() {
           minWidth: 0,
           minHeight: "100vh",
           mt: "72px",
-          p: {
-            xs: 2,
-            sm: 3,
-            md: 4,
-          },
+          p: { xs: 2, sm: 3, md: 4 },
           overflowX: "hidden",
         }}
       >
-        <Box
-          sx={{
-            width: "100%",
-            maxWidth: 1600,
-            mx: "auto",
-          }}
-        >
-          {/* ENCABEZADO DE LA PÁGINA */}
+        <Box sx={{ width: "100%", maxWidth: 1600, mx: "auto" }}>
+          {/* ENCABEZADO */}
           <Stack
-            direction={{
-              xs: "column",
-              sm: "row",
-            }}
+            direction={{ xs: "column", sm: "row" }}
             justifyContent="space-between"
-            alignItems={{
-              xs: "stretch",
-              sm: "center",
-            }}
+            alignItems={{ xs: "stretch", sm: "center" }}
             spacing={2}
             sx={{ mb: 3.5 }}
           >
             <Box>
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                sx={{ mb: 1 }}
+              <Typography
+                sx={{
+                  color: COLORES.secundario,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  letterSpacing: "0.7px",
+                  textTransform: "uppercase",
+                  mb: 1,
+                }}
               >
-                <StorefrontOutlinedIcon
-                  sx={{
-                    fontSize: 19,
-                    color: COLORES.naranja,
-                  }}
-                />
-
-                <Typography
-                  sx={{
-                    color: COLORES.secundario,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    letterSpacing: "0.7px",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Gestión comercial
-                </Typography>
-              </Stack>
+                Gestión comercial
+              </Typography>
 
               <Typography
                 sx={{
-                  fontSize: {
-                    xs: 27,
-                    sm: 32,
-                    md: 35,
-                  },
+                  fontSize: { xs: 27, sm: 32, md: 35 },
                   fontWeight: 850,
                   letterSpacing: "-1.1px",
                   lineHeight: 1.2,
-                  color: COLORES.texto,
                   mb: 1,
                 }}
               >
@@ -878,10 +820,7 @@ export default function RegistroProductos() {
               startIcon={<AddRoundedIcon />}
               sx={{
                 ...botonPrincipalSx,
-                alignSelf: {
-                  xs: "stretch",
-                  sm: "center",
-                },
+                alignSelf: { xs: "stretch", sm: "center" },
                 px: 2.5,
                 py: 1.35,
                 minHeight: 46,
@@ -903,6 +842,7 @@ export default function RegistroProductos() {
               mb: 3.5,
             }}
           >
+            {/* TOTAL DE PRODUCTOS */}
             <Paper elevation={0} sx={tarjetaSx}>
               <Stack
                 direction="row"
@@ -953,16 +893,14 @@ export default function RegistroProductos() {
                     placeItems: "center",
                     bgcolor: COLORES.naranjaClaro,
                     color: COLORES.naranja,
-                    flexShrink: 0,
                   }}
                 >
-                  <Inventory2OutlinedIcon
-                    sx={{ fontSize: 27 }}
-                  />
+                  <Inventory2OutlinedIcon sx={{ fontSize: 27 }} />
                 </Box>
               </Stack>
             </Paper>
 
+            {/* PRODUCTOS DISPONIBLES */}
             <Paper elevation={0} sx={tarjetaSx}>
               <Stack
                 direction="row"
@@ -1014,7 +952,6 @@ export default function RegistroProductos() {
                     placeItems: "center",
                     bgcolor: COLORES.verdeClaro,
                     color: COLORES.verde,
-                    flexShrink: 0,
                   }}
                 >
                   <CheckCircleOutlineRoundedIcon
@@ -1025,862 +962,43 @@ export default function RegistroProductos() {
             </Paper>
           </Box>
 
-          {/* CATÁLOGO */}
-          <Paper
-            elevation={0}
-            sx={{
-              border: `1px solid ${COLORES.borde}`,
-              borderRadius: 3.5,
-              overflow: "hidden",
-              bgcolor: COLORES.blanco,
-              boxShadow: "0 4px 18px rgba(15, 23, 42, 0.025)",
-            }}
-          >
-            {/* CABECERA DE LA TABLA */}
-            <Box
-              sx={{
-                p: {
-                  xs: 2,
-                  sm: 2.5,
-                },
-                borderBottom: `1px solid ${COLORES.borde}`,
-              }}
-            >
-              <Stack
-                direction={{
-                  xs: "column",
-                  sm: "row",
-                }}
-                alignItems={{
-                  xs: "stretch",
-                  sm: "center",
-                }}
-                justifyContent="space-between"
-                spacing={2}
-              >
-                <Box>
-                  <Typography
-                    sx={{
-                      fontSize: 17,
-                      fontWeight: 800,
-                      letterSpacing: "-0.3px",
-                    }}
-                  >
-                    Catálogo de productos
-                  </Typography>
-
-                  <Typography
-                    sx={{
-                      mt: 0.5,
-                      fontSize: 12,
-                      color: COLORES.secundario,
-                    }}
-                  >
-                    Consulta y administra los productos registrados.
-                  </Typography>
-                </Box>
-
-                <Chip
-                  label={`${productosFiltrados.length} ${
-                    productosFiltrados.length === 1
-                      ? "producto"
-                      : "productos"
-                  }`}
-                  size="small"
-                  sx={{
-                    alignSelf: {
-                      xs: "flex-start",
-                      sm: "center",
-                    },
-                    bgcolor: "#f1f5f9",
-                    color: "#475569",
-                    fontWeight: 700,
-                    borderRadius: 2,
-                    height: 28,
-                  }}
-                />
-              </Stack>
-
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Buscar por nombre, descripción o código..."
-                value={busqueda}
-                onChange={(evento) =>
-                  setBusqueda(evento.target.value)
-                }
-                sx={{
-                  ...campoSx,
-                  mt: 2.5,
-                  maxWidth: {
-                    xs: "100%",
-                    md: 480,
-                  },
-                  "& .MuiOutlinedInput-root": {
-                    ...campoSx["& .MuiOutlinedInput-root"],
-                    bgcolor: "#fafbfc",
-                    minHeight: 44,
-                  },
-                }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchRoundedIcon
-                          sx={{
-                            color: "#98a2b3",
-                            fontSize: 21,
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
-                    endAdornment: busqueda ? (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          aria-label="Limpiar búsqueda"
-                          onClick={() => setBusqueda("")}
-                        >
-                          <CloseRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </InputAdornment>
-                    ) : null,
-                  },
-                }}
-              />
-            </Box>
-
-            {/* TABLA */}
-            <TableContainer
-              sx={{
-                overflowX: "auto",
-              }}
-            >
-              <Table sx={{ minWidth: 760 }}>
-                <TableHead>
-                  <TableRow
-                    sx={{
-                      bgcolor: "#fafbfc",
-                    }}
-                  >
-                    <TableCell sx={cabeceraTablaSx}>
-                      Producto
-                    </TableCell>
-
-                    <TableCell sx={cabeceraTablaSx}>
-                      Precio
-                    </TableCell>
-
-                    <TableCell sx={cabeceraTablaSx}>
-                      Stock
-                    </TableCell>
-
-                    <TableCell sx={cabeceraTablaSx}>
-                      Estado
-                    </TableCell>
-
-                    <TableCell
-                      align="right"
-                      sx={cabeceraTablaSx}
-                    >
-                      Acciones
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {cargando ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        align="center"
-                        sx={{ py: 8, borderBottom: 0 }}
-                      >
-                        <CircularProgress
-                          size={30}
-                          sx={{ color: COLORES.naranja }}
-                        />
-
-                        <Typography
-                          sx={{
-                            mt: 1.5,
-                            fontSize: 13,
-                            color: COLORES.secundario,
-                          }}
-                        >
-                          Cargando productos...
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : productosFiltrados.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        align="center"
-                        sx={{
-                          py: 7,
-                          borderBottom: 0,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 58,
-                            height: 58,
-                            mx: "auto",
-                            mb: 2,
-                            borderRadius: 3,
-                            display: "grid",
-                            placeItems: "center",
-                            bgcolor: "#f1f5f9",
-                            color: "#94a3b8",
-                          }}
-                        >
-                          {busqueda ? (
-                            <SearchRoundedIcon
-                              sx={{ fontSize: 28 }}
-                            />
-                          ) : (
-                            <Inventory2OutlinedIcon
-                              sx={{ fontSize: 28 }}
-                            />
-                          )}
-                        </Box>
-
-                        <Typography
-                          sx={{
-                            fontWeight: 750,
-                            fontSize: 15,
-                            color: COLORES.texto,
-                          }}
-                        >
-                          {busqueda
-                            ? "No se encontraron resultados"
-                            : "Todavía no tienes productos"}
-                        </Typography>
-
-                        <Typography
-                          sx={{
-                            mt: 0.7,
-                            fontSize: 13,
-                            color: COLORES.secundario,
-                          }}
-                        >
-                          {busqueda
-                            ? "Prueba con otro nombre o descripción."
-                            : "Registra tu primer producto para comenzar."}
-                        </Typography>
-
-                        {!busqueda && (
-                          <Button
-                            onClick={abrirCrear}
-                            startIcon={<AddRoundedIcon />}
-                            sx={{
-                              mt: 2,
-                              color: COLORES.naranja,
-                              fontWeight: 700,
-                              textTransform: "none",
-                            }}
-                          >
-                            Crear producto
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    productosFiltrados.map((producto) => (
-                      <TableRow
-                        key={producto.id}
-                        hover
-                        sx={{
-                          transition: "background-color 0.15s ease",
-                          "&:last-child td": {
-                            borderBottom: 0,
-                          },
-                          "&:hover": {
-                            bgcolor: "#fcfcfd",
-                          },
-                        }}
-                      >
-                        <TableCell sx={celdaTablaSx}>
-                          <Stack
-                            direction="row"
-                            spacing={1.5}
-                            alignItems="center"
-                            sx={{ minWidth: 230 }}
-                          >
-                            {producto.imagen_url ? (
-                              <Box
-                                component="img"
-                                src={producto.imagen_url}
-                                alt={producto.nombre}
-                                sx={{
-                                  width: 48,
-                                  height: 48,
-                                  borderRadius: 2.5,
-                                  objectFit: "cover",
-                                  bgcolor: "#f1f5f9",
-                                  border: `1px solid ${COLORES.borde}`,
-                                  flexShrink: 0,
-                                }}
-                                onError={(evento) => {
-                                  evento.currentTarget.style.visibility =
-                                    "hidden";
-                                }}
-                              />
-                            ) : (
-                              <Box
-                                sx={{
-                                  width: 48,
-                                  height: 48,
-                                  borderRadius: 2.5,
-                                  bgcolor: COLORES.naranjaClaro,
-                                  color: COLORES.naranja,
-                                  display: "grid",
-                                  placeItems: "center",
-                                  fontWeight: 900,
-                                  fontSize: 18,
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {producto.nombre
-                                  ?.charAt(0)
-                                  ?.toUpperCase() || "P"}
-                              </Box>
-                            )}
-
-                            <Box sx={{ minWidth: 0 }}>
-                              <Typography
-                                sx={{
-                                  fontSize: 13,
-                                  fontWeight: 750,
-                                  color: COLORES.texto,
-                                  overflowWrap: "anywhere",
-                                }}
-                              >
-                                {producto.nombre}
-                              </Typography>
-
-                              <Typography
-                                sx={{
-                                  mt: 0.4,
-                                  fontSize: 12,
-                                  color: COLORES.secundario,
-                                  maxWidth: 320,
-                                  overflowWrap: "anywhere",
-                                }}
-                              >
-                                {producto.descripcion ||
-                                  "Sin descripción"}
-                              </Typography>
-
-                              <Typography
-                                sx={{
-                                  mt: 0.5,
-                                  fontSize: 10,
-                                  color: "#98a2b3",
-                                  fontWeight: 600,
-                                }}
-                              >
-                                ID: {producto.id}
-                              </Typography>
-                            </Box>
-                          </Stack>
-                        </TableCell>
-
-                        <TableCell
-                          sx={{
-                            ...celdaTablaSx,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          <Typography
-                            sx={{
-                              fontSize: 13,
-                              fontWeight: 750,
-                              color: COLORES.texto,
-                            }}
-                          >
-                            {formatoPrecio(producto.precio)}
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell sx={celdaTablaSx}>
-                          <Typography
-                            sx={{
-                              fontSize: 13,
-                              fontWeight: 700,
-                              color:
-                                producto.stock <= 0
-                                  ? COLORES.rojo
-                                  : COLORES.texto,
-                            }}
-                          >
-                            {producto.stock}
-                          </Typography>
-
-                          <Typography
-                            sx={{
-                              mt: 0.3,
-                              fontSize: 11,
-                              color: COLORES.secundario,
-                            }}
-                          >
-                            unidades
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell sx={celdaTablaSx}>
-                          <Chip
-                            size="small"
-                            label={
-                              producto.disponible
-                                ? "Disponible"
-                                : "Inactivo"
-                            }
-                            icon={
-                              producto.disponible ? (
-                                <CheckCircleOutlineRoundedIcon />
-                              ) : undefined
-                            }
-                            sx={{
-                              height: 27,
-                              fontSize: 11,
-                              fontWeight: 700,
-                              borderRadius: 2,
-                              bgcolor: producto.disponible
-                                ? COLORES.verdeClaro
-                                : "#f2f4f7",
-                              color: producto.disponible
-                                ? "#15803d"
-                                : "#667085",
-                              "& .MuiChip-icon": {
-                                color: "inherit",
-                                fontSize: 15,
-                                ml: 0.7,
-                              },
-                            }}
-                          />
-                        </TableCell>
-
-                        <TableCell
-                          align="right"
-                          sx={celdaTablaSx}
-                        >
-                          <Stack
-                            direction="row"
-                            justifyContent="flex-end"
-                            spacing={0.7}
-                          >
-                            <Tooltip title="Editar producto">
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  abrirEditar(producto)
-                                }
-                                aria-label={`Editar ${producto.nombre}`}
-                                sx={{
-                                  width: 34,
-                                  height: 34,
-                                  borderRadius: 2,
-                                  color: "#475569",
-                                  border: `1px solid ${COLORES.borde}`,
-                                  "&:hover": {
-                                    color: COLORES.naranja,
-                                    bgcolor: COLORES.naranjaClaro,
-                                    borderColor: "#fed7aa",
-                                  },
-                                }}
-                              >
-                                <EditOutlinedIcon
-                                  sx={{ fontSize: 18 }}
-                                />
-                              </IconButton>
-                            </Tooltip>
-
-                            <Tooltip title="Desactivar producto">
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  abrirConfirmacionEliminar(
-                                    producto
-                                  )
-                                }
-                                aria-label={`Desactivar ${producto.nombre}`}
-                                sx={{
-                                  width: 34,
-                                  height: 34,
-                                  borderRadius: 2,
-                                  color: "#98a2b3",
-                                  border: `1px solid ${COLORES.borde}`,
-                                  "&:hover": {
-                                    color: COLORES.rojo,
-                                    bgcolor: COLORES.rojoClaro,
-                                    borderColor: "#fecaca",
-                                  },
-                                }}
-                              >
-                                <DeleteOutlineRoundedIcon
-                                  sx={{ fontSize: 18 }}
-                                />
-                              </IconButton>
-                            </Tooltip>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {/* PIE DE TABLA */}
-            {!cargando && productosFiltrados.length > 0 && (
-              <Box
-                sx={{
-                  px: 2.5,
-                  py: 1.7,
-                  bgcolor: "#fafbfc",
-                  borderTop: `1px solid ${COLORES.borde}`,
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 11,
-                    color: COLORES.secundario,
-                  }}
-                >
-                  Mostrando{" "}
-                  <Box
-                    component="span"
-                    sx={{
-                      fontWeight: 800,
-                      color: COLORES.texto,
-                    }}
-                  >
-                    {productosFiltrados.length}
-                  </Box>{" "}
-                  de{" "}
-                  <Box
-                    component="span"
-                    sx={{
-                      fontWeight: 800,
-                      color: COLORES.texto,
-                    }}
-                  >
-                    {productos.length}
-                  </Box>{" "}
-                  productos registrados
-                </Typography>
-              </Box>
-            )}
-          </Paper>
+          {/* TABLA DE PRODUCTOS */}
+          <TablaProductos
+            productos={productos}
+            cargando={cargando}
+            busqueda={busqueda}
+            setBusqueda={setBusqueda}
+            onCrear={abrirCrear}
+            onEditar={abrirEditar}
+            onEliminar={abrirConfirmacionEliminar}
+            onDuplicar={abrirDuplicar}
+            formatoPrecio={formatoPrecio}
+          />
         </Box>
+      </Box>
 
-        {/* DIÁLOGO PARA REGISTRAR Y EDITAR */}
-        <Dialog
-          open={dialogoAbierto}
-          onClose={cerrarFormulario}
-          fullWidth
-          maxWidth="sm"
-          PaperProps={{
-            sx: {
-              borderRadius: 3.5,
-              boxShadow: "0 24px 70px rgba(15, 23, 42, 0.16)",
-            },
-          }}
-        >
-          <Box
-            component="form"
-            onSubmit={guardarProducto}
-          >
-            <DialogTitle
-              sx={{
-                px: 3,
-                pt: 3,
-                pb: 2,
-              }}
-            >
-              <Stack
-                direction="row"
-                alignItems="flex-start"
-                spacing={1.5}
-              >
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 2.5,
-                    display: "grid",
-                    placeItems: "center",
-                    bgcolor: COLORES.naranjaClaro,
-                    color: COLORES.naranja,
-                    flexShrink: 0,
-                  }}
-                >
-                  {productoSeleccionado ? (
-                    <EditOutlinedIcon />
-                  ) : (
-                    <AddRoundedIcon />
-                  )}
-                </Box>
+      {/* --------------------------------------------------
+          DIÁLOGO DE REGISTRO, EDICIÓN Y DUPLICACIÓN
+      -------------------------------------------------- */}
 
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
-                    sx={{
-                      fontSize: 20,
-                      fontWeight: 850,
-                      letterSpacing: "-0.5px",
-                    }}
-                  >
-                    {productoSeleccionado
-                      ? "Editar producto"
-                      : "Nuevo producto"}
-                  </Typography>
-
-                  <Typography
-                    sx={{
-                      mt: 0.5,
-                      fontSize: 12,
-                      color: COLORES.secundario,
-                      fontWeight: 400,
-                    }}
-                  >
-                    {productoSeleccionado
-                      ? "Actualiza la información del producto."
-                      : "Completa la información para agregarlo al catálogo."}
-                  </Typography>
-                </Box>
-
-                <IconButton
-                  onClick={cerrarFormulario}
-                  disabled={guardando}
-                  size="small"
-                  aria-label="Cerrar formulario"
-                  sx={{
-                    color: "#98a2b3",
-                    mt: -0.5,
-                    mr: -1,
-                  }}
-                >
-                  <CloseRoundedIcon />
-                </IconButton>
-              </Stack>
-            </DialogTitle>
-
-            <Divider sx={{ borderColor: COLORES.borde }} />
-
-            <DialogContent sx={{ px: 3, py: 3 }}>
-              <Stack spacing={2.2}>
-                <TextField
-                  label="Nombre del producto"
-                  value={formulario.nombre}
-                  onChange={(evento) =>
-                    actualizarCampo(
-                      "nombre",
-                      evento.target.value
-                    )
-                  }
-                  fullWidth
-                  required
-                  autoFocus
-                  inputProps={{ maxLength: 150 }}
-                  sx={campoSx}
-                />
-
-                <TextField
-                  label="Descripción"
-                  value={formulario.descripcion}
-                  onChange={(evento) =>
-                    actualizarCampo(
-                      "descripcion",
-                      evento.target.value
-                    )
-                  }
-                  fullWidth
-                  multiline
-                  minRows={2}
-                  inputProps={{ maxLength: 500 }}
-                  sx={campoSx}
-                />
-
-                <Stack
-                  direction={{
-                    xs: "column",
-                    sm: "row",
-                  }}
-                  spacing={2}
-                >
-                  <TextField
-                    label="Precio (COP)"
-                    type="number"
-                    value={formulario.precio}
-                    onChange={(evento) =>
-                      actualizarCampo(
-                        "precio",
-                        evento.target.value
-                      )
-                    }
-                    inputProps={{
-                      min: 0,
-                      step: "0.01",
-                    }}
-                    fullWidth
-                    required
-                    sx={campoSx}
-                  />
-
-                  <TextField
-                    label="Stock disponible"
-                    type="number"
-                    value={formulario.stock}
-                    onChange={(evento) =>
-                      actualizarCampo(
-                        "stock",
-                        evento.target.value
-                      )
-                    }
-                    inputProps={{
-                      min: 0,
-                      step: 1,
-                    }}
-                    fullWidth
-                    required
-                    sx={campoSx}
-                  />
-                </Stack>
-
-                <TextField
-                  label="URL de imagen (opcional)"
-                  type="url"
-                  value={formulario.imagen_url}
-                  onChange={(evento) =>
-                    actualizarCampo(
-                      "imagen_url",
-                      evento.target.value
-                    )
-                  }
-                  fullWidth
-                  sx={campoSx}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <ImageOutlinedIcon
-                            sx={{
-                              fontSize: 20,
-                              color: "#98a2b3",
-                            }}
-                          />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-
-                {productoSeleccionado && (
-                  <TextField
-                    select
-                    label="Disponibilidad"
-                    value={
-                      formulario.disponible
-                        ? "true"
-                        : "false"
-                    }
-                    onChange={(evento) =>
-                      actualizarCampo(
-                        "disponible",
-                        evento.target.value === "true"
-                      )
-                    }
-                    fullWidth
-                    sx={campoSx}
-                  >
-                    <MenuItem value="true">
-                      Disponible
-                    </MenuItem>
-
-                    <MenuItem value="false">
-                      No disponible
-                    </MenuItem>
-                  </TextField>
-                )}
-              </Stack>
-            </DialogContent>
-
-            <Divider sx={{ borderColor: COLORES.borde }} />
-
-            <DialogActions
-              sx={{
-                p: 3,
-                gap: 1,
-              }}
-            >
-              <Button
-                onClick={cerrarFormulario}
-                color="inherit"
-                disabled={guardando}
-                sx={{
-                  textTransform: "none",
-                  fontWeight: 700,
-                  borderRadius: 2.5,
-                  px: 2,
-                }}
-              >
-                Cancelar
-              </Button>
-
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={guardando}
-                startIcon={
-                  !guardando ? (
-                    productoSeleccionado ? (
-                      <EditOutlinedIcon />
-                    ) : (
-                      <AddRoundedIcon />
-                    )
-                  ) : undefined
-                }
-                sx={{
-                  ...botonPrincipalSx,
-                  minWidth: 170,
-                  py: 1.1,
-                }}
-              >
-                {guardando ? (
-                  <CircularProgress
-                    size={22}
-                    color="inherit"
-                  />
-                ) : productoSeleccionado ? (
-                  "Guardar cambios"
-                ) : (
-                  "Registrar producto"
-                )}
-              </Button>
-            </DialogActions>
-          </Box>
-        </Dialog>
-
-        {/* CONFIRMACIÓN PARA DESACTIVAR */}
-        <Dialog
-          open={dialogoEliminar}
-          onClose={cerrarConfirmacionEliminar}
-          maxWidth="xs"
-          fullWidth
-          PaperProps={{
-            sx: {
-              borderRadius: 3.5,
-              boxShadow: "0 24px 70px rgba(15, 23, 42, 0.16)",
-            },
-          }}
-        >
-          <DialogTitle sx={{ px: 3, pt: 3, pb: 1.5 }}>
+      <Dialog
+        open={dialogoAbierto}
+        onClose={cerrarFormulario}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            borderRadius: 3.5,
+            boxShadow: "0 24px 70px rgba(15, 23, 42, 0.16)",
+          },
+        }}
+      >
+        <Box component="form" onSubmit={guardarProducto}>
+          <DialogTitle sx={{ px: 3, pt: 3, pb: 2 }}>
             <Stack
               direction="row"
+              alignItems="flex-start"
               spacing={1.5}
-              alignItems="center"
             >
               <Box
                 sx={{
@@ -1889,72 +1007,160 @@ export default function RegistroProductos() {
                   borderRadius: 2.5,
                   display: "grid",
                   placeItems: "center",
-                  bgcolor: COLORES.rojoClaro,
-                  color: COLORES.rojo,
+                  bgcolor: COLORES.naranjaClaro,
+                  color: COLORES.naranja,
                   flexShrink: 0,
                 }}
               >
-                <DeleteOutlineRoundedIcon />
+                {productoSeleccionado ? (
+                  <EditOutlinedIcon />
+                ) : (
+                  <AddRoundedIcon />
+                )}
               </Box>
 
-              <Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
                   sx={{
-                    fontSize: 19,
+                    fontSize: 20,
                     fontWeight: 850,
+                    letterSpacing: "-0.5px",
                   }}
                 >
-                  Desactivar producto
+                  {productoSeleccionado
+                    ? "Editar producto"
+                    : formulario.nombre.endsWith("(copia)")
+                      ? "Duplicar producto"
+                      : "Nuevo producto"}
                 </Typography>
 
                 <Typography
                   sx={{
+                    mt: 0.5,
                     fontSize: 12,
                     color: COLORES.secundario,
-                    mt: 0.3,
                   }}
                 >
-                  Confirma esta acción
+                  {productoSeleccionado
+                    ? "Actualiza la información del producto."
+                    : formulario.nombre.endsWith("(copia)")
+                      ? "Verifica los datos y guarda la nueva copia."
+                      : "Completa la información para agregarlo al catálogo."}
                 </Typography>
               </Box>
+
+              <IconButton
+                onClick={cerrarFormulario}
+                disabled={guardando}
+                size="small"
+                aria-label="Cerrar formulario"
+                sx={{ color: "#98a2b3", mt: -0.5, mr: -1 }}
+              >
+                <CloseRoundedIcon />
+              </IconButton>
             </Stack>
           </DialogTitle>
 
-          <DialogContent sx={{ px: 3, py: 2 }}>
-            <Typography
-              sx={{
-                fontSize: 14,
-                lineHeight: 1.8,
-                color: COLORES.secundario,
-              }}
-            >
-              ¿Deseas desactivar el producto{" "}
-              <Box
-                component="strong"
-                sx={{
-                  fontWeight: 800,
-                  color: COLORES.texto,
-                }}
+          <Divider sx={{ borderColor: COLORES.borde }} />
+
+          <DialogContent sx={{ px: 3, py: 3 }}>
+            <Stack spacing={2.2}>
+              <TextField
+                label="Nombre del producto"
+                value={formulario.nombre}
+                onChange={(evento) =>
+                  actualizarCampo("nombre", evento.target.value)
+                }
+                fullWidth
+                required
+                autoFocus
+                inputProps={{ maxLength: 150 }}
+                sx={campoSx}
+              />
+
+              <TextField
+                label="Descripción"
+                value={formulario.descripcion}
+                onChange={(evento) =>
+                  actualizarCampo("descripcion", evento.target.value)
+                }
+                fullWidth
+                multiline
+                minRows={2}
+                inputProps={{ maxLength: 500 }}
+                sx={campoSx}
+              />
+
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
               >
-                {productoSeleccionado?.nombre}
-              </Box>
-              ? Dejará de aparecer en esta lista, pero permanecerá
-              guardado en la base de datos.
-            </Typography>
+                <TextField
+                  label="Precio (COP)"
+                  type="number"
+                  value={formulario.precio}
+                  onChange={(evento) =>
+                    actualizarCampo("precio", evento.target.value)
+                  }
+                  inputProps={{ min: 0, step: "0.01" }}
+                  fullWidth
+                  required
+                  sx={campoSx}
+                />
+
+                <TextField
+                  label="Stock disponible"
+                  type="number"
+                  value={formulario.stock}
+                  onChange={(evento) =>
+                    actualizarCampo("stock", evento.target.value)
+                  }
+                  inputProps={{ min: 0, step: 1 }}
+                  fullWidth
+                  required
+                  sx={campoSx}
+                />
+              </Stack>
+
+              <TextField
+                label="URL de imagen (opcional)"
+                type="url"
+                value={formulario.imagen_url}
+                onChange={(evento) =>
+                  actualizarCampo("imagen_url", evento.target.value)
+                }
+                fullWidth
+                sx={campoSx}
+              />
+
+              {productoSeleccionado && (
+                <TextField
+                  select
+                  label="Disponibilidad"
+                  value={formulario.disponible ? "true" : "false"}
+                  onChange={(evento) =>
+                    actualizarCampo(
+                      "disponible",
+                      evento.target.value === "true"
+                    )
+                  }
+                  fullWidth
+                  sx={campoSx}
+                >
+                  <MenuItem value="true">Disponible</MenuItem>
+                  <MenuItem value="false">No disponible</MenuItem>
+                </TextField>
+              )}
+            </Stack>
           </DialogContent>
 
-          <DialogActions
-            sx={{
-              px: 3,
-              pb: 3,
-              pt: 1,
-              gap: 1,
-            }}
-          >
+          <Divider sx={{ borderColor: COLORES.borde }} />
+
+          <DialogActions sx={{ p: 3, gap: 1 }}>
             <Button
-              onClick={cerrarConfirmacionEliminar}
+              onClick={cerrarFormulario}
               color="inherit"
-              disabled={eliminando}
+              disabled={guardando}
               sx={{
                 textTransform: "none",
                 fontWeight: 700,
@@ -1966,68 +1172,185 @@ export default function RegistroProductos() {
             </Button>
 
             <Button
-              color="error"
+              type="submit"
               variant="contained"
-              onClick={eliminarProducto}
-              disabled={eliminando}
+              disabled={guardando}
               startIcon={
-                !eliminando ? (
-                  <DeleteOutlineRoundedIcon />
+                !guardando ? (
+                  productoSeleccionado ? (
+                    <EditOutlinedIcon />
+                  ) : (
+                    <AddRoundedIcon />
+                  )
                 ) : undefined
               }
               sx={{
-                borderRadius: 2.5,
-                textTransform: "none",
-                fontWeight: 700,
-                boxShadow: "none",
-                minWidth: 130,
-                "&:hover": {
-                  boxShadow: "none",
-                },
+                ...botonPrincipalSx,
+                minWidth: 170,
+                py: 1.1,
               }}
             >
-              {eliminando ? (
-                <CircularProgress
-                  size={22}
-                  color="inherit"
-                />
+              {guardando ? (
+                <CircularProgress size={22} color="inherit" />
+              ) : productoSeleccionado ? (
+                "Guardar cambios"
+              ) : formulario.nombre.endsWith("(copia)") ? (
+                "Guardar copia"
               ) : (
-                "Desactivar"
+                "Registrar producto"
               )}
             </Button>
           </DialogActions>
-        </Dialog>
+        </Box>
+      </Dialog>
 
-        {/* NOTIFICACIONES */}
-        <Snackbar
-          open={mensaje.abierto}
-          autoHideDuration={3500}
-          onClose={cerrarMensaje}
-          anchorOrigin={{
-            vertical: "bottom",
-            horizontal: "right",
-          }}
-        >
-          <Alert
-            severity={mensaje.tipo}
-            variant="filled"
-            onClose={() =>
-              setMensaje((anterior) => ({
-                ...anterior,
-                abierto: false,
-              }))
-            }
+      {/* --------------------------------------------------
+          CONFIRMACIÓN DE DESACTIVACIÓN
+      -------------------------------------------------- */}
+
+      <Dialog
+        open={dialogoEliminar}
+        onClose={cerrarConfirmacionEliminar}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3.5,
+            boxShadow: "0 24px 70px rgba(15, 23, 42, 0.16)",
+          },
+        }}
+      >
+        <DialogTitle sx={{ px: 3, pt: 3, pb: 1.5 }}>
+          <Stack
+            direction="row"
+            spacing={1.5}
+            alignItems="center"
+          >
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2.5,
+                display: "grid",
+                placeItems: "center",
+                bgcolor: COLORES.rojoClaro,
+                color: COLORES.rojo,
+                flexShrink: 0,
+              }}
+            >
+              <DeleteOutlineRoundedIcon />
+            </Box>
+
+            <Box>
+              <Typography sx={{ fontSize: 19, fontWeight: 850 }}>
+                Desactivar producto
+              </Typography>
+
+              <Typography
+                sx={{
+                  fontSize: 12,
+                  color: COLORES.secundario,
+                  mt: 0.3,
+                }}
+              >
+                Confirma esta acción
+              </Typography>
+            </Box>
+          </Stack>
+        </DialogTitle>
+
+        <DialogContent sx={{ px: 3, py: 2 }}>
+          <Typography
             sx={{
-              width: "100%",
-              borderRadius: 2.5,
-              boxShadow: "0 8px 24px rgba(15, 23, 42, 0.15)",
-              alignItems: "center",
+              fontSize: 14,
+              lineHeight: 1.8,
+              color: COLORES.secundario,
             }}
           >
-            {mensaje.texto}
-          </Alert>
-        </Snackbar>
-      </Box>
+            ¿Deseas desactivar el producto{" "}
+            <Box
+              component="strong"
+              sx={{ fontWeight: 800, color: COLORES.texto }}
+            >
+              {productoSeleccionado?.nombre}
+            </Box>
+            ? Dejará de aparecer en esta lista, pero permanecerá
+            guardado en la base de datos.
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1, gap: 1 }}>
+          <Button
+            onClick={cerrarConfirmacionEliminar}
+            color="inherit"
+            disabled={eliminando}
+            sx={{
+              textTransform: "none",
+              fontWeight: 700,
+              borderRadius: 2.5,
+              px: 2,
+            }}
+          >
+            Cancelar
+          </Button>
+
+          <Button
+            color="error"
+            variant="contained"
+            onClick={eliminarProducto}
+            disabled={eliminando}
+            startIcon={
+              !eliminando ? (
+                <DeleteOutlineRoundedIcon />
+              ) : undefined
+            }
+            sx={{
+              borderRadius: 2.5,
+              textTransform: "none",
+              fontWeight: 700,
+              boxShadow: "none",
+              minWidth: 130,
+              "&:hover": { boxShadow: "none" },
+            }}
+          >
+            {eliminando ? (
+              <CircularProgress size={22} color="inherit" />
+            ) : (
+              "Desactivar"
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* NOTIFICACIONES */}
+      <Snackbar
+        open={mensaje.abierto}
+        autoHideDuration={3500}
+        onClose={cerrarMensaje}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+      >
+        <Alert
+          severity={mensaje.tipo}
+          variant="filled"
+          onClose={() =>
+            setMensaje((anterior) => ({
+              ...anterior,
+              abierto: false,
+            }))
+          }
+          sx={{
+            width: "100%",
+            borderRadius: 2.5,
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.15)",
+            alignItems: "center",
+          }}
+        >
+          {mensaje.texto}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
