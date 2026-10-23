@@ -1,8 +1,10 @@
 
 import React, { useState } from "react";
+import DrawerBar from "../components/DrawerBar"; // Ajusta la ruta si tu componente está en otra carpeta
 
 import {
   Alert,
+  AppBar,
   Box,
   Button,
   Chip,
@@ -12,14 +14,20 @@ import {
   DialogTitle,
   Divider,
   FormControlLabel,
+  IconButton,
   MenuItem,
   Paper,
   Snackbar,
   Stack,
   Switch,
   TextField,
+  Toolbar,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
+
+import MenuIcon from "@mui/icons-material/Menu";
 
 const COLORES = {
   fondo: "#f6f7f9",
@@ -79,6 +87,19 @@ const estadoColor = {
 };
 
 export default function PanelDomiciliario() {
+  const theme = useTheme();
+  const esMovil = useMediaQuery(theme.breakpoints.down("md"));
+  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [menuMovilOpen, setMenuMovilOpen] = useState(false);
+
+  const abrirMenu = () => {
+    if (esMovil) {
+      setMenuMovilOpen(true);
+    } else {
+      setDrawerOpen((anterior) => !anterior);
+    }
+  };
+
   const [disponible, setDisponible] = useState(true);
   const [pedidos, setPedidos] = useState(pedidosIniciales);
 
@@ -227,13 +248,66 @@ export default function PanelDomiciliario() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: COLORES.fondo,
-        p: { xs: 2, sm: 3, md: 4 },
-      }}
-    >
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: COLORES.fondo }}>
+      <AppBar
+        position="fixed"
+        elevation={0}
+        sx={{
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          bgcolor: COLORES.blanco,
+          color: COLORES.texto,
+          borderBottom: `1px solid ${COLORES.borde}`,
+        }}
+      >
+        <Toolbar sx={{ minHeight: "72px !important", gap: 1.5 }}>
+          <IconButton
+            onClick={abrirMenu}
+            aria-label="Abrir o cerrar menú"
+            edge="start"
+            sx={{ color: COLORES.texto }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography sx={{ fontSize: 16, fontWeight: 800 }}>
+            APP DOMI
+          </Typography>
+          <Box sx={{ flexGrow: 1 }} />
+          <Typography
+            sx={{
+              display: { xs: "none", sm: "block" },
+              fontSize: 12,
+              color: COLORES.secundario,
+            }}
+          >
+            Panel del domiciliario
+          </Typography>
+        </Toolbar>
+      </AppBar>
+
+      <DrawerBar
+        open={esMovil ? menuMovilOpen : drawerOpen}
+        onClose={() => setMenuMovilOpen(false)}
+      />
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          minWidth: 0,
+          ml: { xs: 0, md: drawerOpen ? "248px" : "76px" },
+          transition: theme.transitions.create("margin", {
+            duration: theme.transitions.duration.shortest,
+          }),
+        }}
+      >
+        <Toolbar sx={{ minHeight: "72px !important" }} />
+        <Box
+          sx={{
+            minHeight: "calc(100vh - 72px)",
+            bgcolor: COLORES.fondo,
+            p: { xs: 2, sm: 3, md: 4 },
+          }}
+        >
       <Box sx={{ maxWidth: 1200, mx: "auto" }}>
         {/* Encabezado */}
         <Stack
@@ -804,6 +878,8 @@ export default function PanelDomiciliario() {
           {mensaje.texto}
         </Alert>
       </Snackbar>
+        </Box>
+      </Box>
     </Box>
   );
 }
