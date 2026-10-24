@@ -2,7 +2,7 @@
 import express from "express";
 import cors from "cors";
 import productoRoutes from "./routes/productoRoutes.js";
-
+import domiciliarioRoutes from "./routes/domiciliarioRoutes.js";
 const app = express();
 
 app.use(cors());
@@ -15,5 +15,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/productos", productoRoutes);
+app.use("/api/domiciliarios", domiciliarioRoutes);
 
 export default app;

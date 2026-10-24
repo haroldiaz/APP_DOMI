@@ -11,7 +11,7 @@ import MenuPrincipal from "./pages/MenuPrincipal";
 import RegistroProducto from "./pages/Productos/RegistroProductos";
 
 import Login from "./pages/Login";
-import PanelDomiciliario from "./pages/PanelDomiciliario";
+import PanelDomiciliario from "./pages/Domiciliarios/PanelDomiciliario";
 import RegistroPedidos from "./pages/RegistroPedidos";
 import Reportes from "./pages/Reportes";
 
